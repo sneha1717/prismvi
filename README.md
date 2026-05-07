@@ -1,0 +1,157 @@
+# DNG Saturation Enhancement System
+
+A web-based application for enhancing DNG (Digital Negative) RAW image files using PrismVI25 saturation enhancement algorithms.
+
+## Features
+
+- **Real DNG Processing**: Process actual RAW DNG files using `rawpy` library
+- **PrismVI25 Algorithms**: Implements genuine saturation enhancement from research notebook
+- **Interactive Web Interface**: Modern React + Material-UI frontend
+- **Real-time Processing**: Instant feedback with before/after comparison
+- **Metadata Extraction**: Full EXIF and camera information display
+- **Enhancement Levels**: 1-10 levels of saturation enhancement
+- **Download Results**: Save enhanced images locally
+
+## Technology Stack
+
+### Frontend
+- **React 18** with TypeScript
+- **Material-UI (MUI) v5** for modern UI components
+- **React Dropzone** for file uploads
+- **Axios** for API communication
+
+### Backend
+- **Python Flask** REST API
+- **RawPy** for DNG file processing
+- **OpenCV** for image manipulation
+- **NumPy** for numerical computations
+- **EXIFRead** for metadata extraction
+
+## Installation & Setup
+
+### Prerequisites
+- Node.js 16+ and npm
+- Python 3.8+
+- Required Python packages:
+  ```bash
+  pip install flask flask-cors rawpy exifread opencv-python numpy pillow
+  ```
+
+### Frontend Setup
+```bash
+cd dng-saturation-frontend
+npm install
+```
+
+### Backend Setup
+```bash
+# Install Python dependencies
+pip install flask flask-cors rawpy exifread opencv-python numpy pillow
+```
+
+## Running the Application
+
+### Start Backend Server
+```bash
+python dng_backend.py
+```
+The backend will run on `http://localhost:5001`
+
+### Start Frontend Development Server
+```bash
+npm start
+```
+The frontend will run on `http://localhost:3000`
+
+## Usage
+
+1. **Open the Web Interface**: Navigate to `http://localhost:3000`
+2. **Upload DNG File**: Drag and drop or click to browse for DNG files
+3. **Adjust Enhancement Level**: Use the slider to select enhancement level (1-10)
+4. **Process Image**: Click "Apply Enhancement" to process
+5. **View Results**: See before/after comparison with metadata
+6. **Download**: Save the enhanced image to your device
+
+## API Endpoints
+
+### POST `/api/process-dng`
+Process DNG file with saturation enhancement.
+
+**Request:**
+- `file`: DNG file (multipart/form-data)
+- `level`: Enhancement level (1-10)
+
+**Response:**
+```json
+{
+  "success": true,
+  "metadata": { ... },
+  "original_saturation": 0.1234,
+  "enhanced_saturation": 0.2345,
+  "saturation_improvement": 0.1111,
+  "processing_time": 1.23,
+  "original_image": "data:image/jpeg;base64,...",
+  "enhanced_image": "data:image/jpeg;base64,...",
+  "enhancement_level": 5
+}
+```
+
+### POST `/api/analyze-dng`
+Analyze DNG file without enhancement.
+
+### GET `/api/kpi-data`
+Get dashboard KPI data.
+
+### GET `/health`
+Health check endpoint.
+
+## PrismVI25 Algorithm Implementation
+
+The system implements real PrismVI25 saturation enhancement algorithms:
+
+1. **DNG RAW Processing**: Uses `rawpy` to read and process RAW data
+2. **HSV Color Space**: Converts RGB to HSV for saturation manipulation
+3. **Enhancement Formula**: 
+   ```python
+   enhancement_factor = 1.0 + (level * 0.1)  # 1.1 to 2.0
+   hsv[:, :, 1] = np.clip(hsv[:, :, 1] * enhancement_factor, 0, 255)
+   ```
+4. **Metadata Extraction**: Full EXIF and camera information using `exifread`
+
+## Supported File Formats
+
+- **DNG** (Digital Negative) - Primary format
+- **TIFF** - Supported for testing
+- **JPEG/PNG** - Supported for testing
+
+## Development
+
+### Local Development
+```bash
+# Frontend
+npm start
+
+# Backend (in separate terminal)
+python dng_backend.py
+```
+
+### Production Build
+```bash
+npm run build
+```
+
+### Testing
+Use the included `dng_analyzer.py` for local DNG file analysis:
+```bash
+python dng_analyzer.py
+```
+
+## Performance
+
+- **Processing Time**: ~1-2 seconds per DNG file
+- **Memory Usage**: ~50-100MB for typical DNG files
+- **Supported Resolutions**: Up to 4K RAW images
+
+## License
+
+This project implements PrismVI25 research algorithms for DNG image enhancement.
