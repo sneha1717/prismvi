@@ -21,6 +21,8 @@ import {
 import { useDropzone } from 'react-dropzone';
 import axios from 'axios';
 
+const API_BASE_URL = (process.env.REACT_APP_API_URL || 'http://localhost:5001').replace(/\/$/, '');
+
 const ImageProcessor: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [originalImage, setOriginalImage] = useState<string>('');
@@ -58,7 +60,7 @@ const ImageProcessor: React.FC = () => {
       formData.append('file', selectedFile);
       formData.append('level', saturationLevel.toString());
 
-      const response = await axios.post('http://localhost:5001/api/process-dng', formData, {
+      const response = await axios.post(`${API_BASE_URL}/api/process-dng`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

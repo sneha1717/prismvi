@@ -26,6 +26,7 @@ A web-based application for enhancing DNG (Digital Negative) RAW image files usi
 - **OpenCV** for image manipulation
 - **NumPy** for numerical computations
 - **EXIFRead** for metadata extraction
+- **Gunicorn** for Railway production serving
 
 ## Installation & Setup
 
@@ -46,7 +47,7 @@ npm install
 ### Backend Setup
 ```bash
 # Install Python dependencies
-pip install flask flask-cors rawpy exifread opencv-python numpy pillow
+pip install -r requirements.txt
 ```
 
 ## Running the Application
@@ -62,6 +63,22 @@ The backend will run on `http://localhost:5001`
 npm start
 ```
 The frontend will run on `http://localhost:3000`
+
+### Environment Variables
+
+Frontend (`.env.local` for local development, Vercel project env var in production):
+
+```bash
+REACT_APP_API_URL=http://localhost:5001
+```
+
+Backend (`.env` locally or Railway service variables):
+
+```bash
+FRONTEND_ORIGIN=http://localhost:3000
+PORT=5001
+FLASK_DEBUG=false
+```
 
 ## Usage
 
@@ -139,6 +156,23 @@ python dng_backend.py
 ```bash
 npm run build
 ```
+
+### Railway + Vercel Deployment
+
+1. **Deploy the backend to Railway**
+   - Create a Railway service from this repository.
+   - Railway will install backend packages from `/home/runner/work/prismvi/prismvi/requirements.txt`.
+   - Start command is defined in `/home/runner/work/prismvi/prismvi/Procfile`.
+   - Add `FRONTEND_ORIGIN=https://your-vercel-app.vercel.app` in Railway variables.
+   - After deploy, confirm `https://your-railway-domain/health` returns a healthy response.
+
+2. **Connect the frontend on Vercel**
+   - Add `REACT_APP_API_URL=https://your-railway-domain` in Vercel environment variables.
+   - Redeploy the frontend so the new backend URL is embedded in the build.
+
+3. **Verify the integration**
+   - Open the Vercel frontend.
+   - Upload a sample image and confirm processing succeeds against the Railway backend.
 
 ### Testing
 Use the included `dng_analyzer.py` for local DNG file analysis:
