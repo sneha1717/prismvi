@@ -161,8 +161,8 @@ npm run build
 
 1. **Deploy the backend to Railway**
    - Create a Railway service from this repository.
-   - Railway will install backend packages from `/home/runner/work/prismvi/prismvi/requirements.txt`.
-   - Start command is defined in `/home/runner/work/prismvi/prismvi/Procfile`.
+   - Railway will install backend packages from `requirements.txt`.
+   - Start command is defined in `Procfile`.
    - Add `FRONTEND_ORIGIN=https://your-vercel-app.vercel.app` in Railway variables.
    - After deploy, confirm `https://your-railway-domain/health` returns a healthy response.
 

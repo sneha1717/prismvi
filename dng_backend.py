@@ -34,13 +34,16 @@ def get_allowed_origins():
     ]
 
 
+ALLOWED_ORIGINS = get_allowed_origins()
+
 CORS(
     app,
     resources={
-        r"/api/*": {"origins": get_allowed_origins()},
-        r"/health": {"origins": get_allowed_origins()},
+        r"/api/*": {"origins": ALLOWED_ORIGINS},
+        r"/health": {"origins": ALLOWED_ORIGINS},
     },
 )
+app.logger.info("Configured allowed frontend origins: %s", ", ".join(ALLOWED_ORIGINS))
 
 def mean_saturation_from_dng(dng_path):
     """Extract saturation metrics from DNG file - from PrismVI25 notebook"""
@@ -235,5 +238,5 @@ if __name__ == '__main__':
     print("  POST /api/analyze-dng - Analyze DNG without enhancement")
     print("  GET /api/kpi-data - Get dashboard KPI data")
     print("  GET /health - Health check")
-    print(f"Allowed frontend origins: {', '.join(get_allowed_origins())}")
+    print(f"Allowed frontend origins: {', '.join(ALLOWED_ORIGINS)}")
     app.run(host='0.0.0.0', port=port, debug=debug)
