@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -11,24 +11,73 @@ import {
   CircularProgress,
   Alert,
   Chip,
-  Container
-} from '@mui/material';
+  Container,
+  Grid,
+  Switch,
+  FormControlLabel,
+  Fade,
+  Zoom,
+  LinearProgress,
+  Avatar,
+  IconButton,
+  Tooltip,
+  } from '@mui/material';
 import {
   CloudUpload,
   AutoFixHigh,
-  Download
+  Download,
+  Brightness4,
+  Brightness7,
+  Timeline,
+  Speed,
+  PhotoCamera,
+  Analytics,
+  CheckCircle
 } from '@mui/icons-material';
 import { useDropzone } from 'react-dropzone';
 import axios from 'axios';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
 
 const ImageProcessor: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [originalImage, setOriginalImage] = useState<string>('');
   const [processedImage, setProcessedImage] = useState<string>('');
-  const [saturationLevel, setSaturationLevel] = useState<number>(5);
+  const [saturationLevel, setSaturationLevel] = useState<number>(3); // Start from 3
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [metadata, setMetadata] = useState<any>(null);
   const [error, setError] = useState<string>('');
+  const [darkMode, setDarkMode] = useState<boolean>(false);
+  const [kpiData, setKpiData] = useState<any>(null);
+
+  // Theme configuration
+  const theme = createTheme({
+    palette: {
+      mode: darkMode ? 'dark' : 'light',
+      primary: {
+        main: '#1976d2',
+      },
+      secondary: {
+        main: '#dc004e',
+      },
+      background: {
+        default: darkMode ? '#121212' : '#f5f5f5',
+        paper: darkMode ? '#1e1e1e' : '#ffffff',
+      },
+    },
+  });
+
+  // Fetch KPI data
+  useEffect(() => {
+    const fetchKPI = async () => {
+      try {
+        const response = await axios.get('http://localhost:5001/api/kpi-data');
+        setKpiData(response.data);
+      } catch (err) {
+        console.error('Failed to fetch KPI data:', err);
+      }
+    };
+    fetchKPI();
+  }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
@@ -79,13 +128,108 @@ const ImageProcessor: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="xl">
-      <Typography variant="h4" gutterBottom>
-        DNG Image Processor
-      </Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-        Upload your DNG image and apply precision saturation enhancement using PrismVI25 algorithms
-      </Typography>
+    <ThemeProvider theme={theme}>
+      <Container maxWidth="xl">
+        {/* Header with Dark Mode Toggle */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Box>
+            <Typography variant="h4" gutterBottom>
+              PrismVI25 DNG Processor
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              Precision Saturation Enhancement System
+            </Typography>
+          </Box>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={darkMode}
+                onChange={(e) => setDarkMode(e.target.checked)}
+                icon={<Brightness7 />}
+                checkedIcon={<Brightness4 />}
+              />
+            }
+            label={darkMode ? "Dark Mode" : "Light Mode"}
+          />
+        </Box>
+
+        {/* KPI Dashboard */}
+        {kpiData && (
+          <Fade in={!!kpiData}>
+            <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
+              <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Analytics />
+                Performance Dashboard
+              </Typography>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                <Card sx={{ flex: '1 1 200px', textAlign: 'center', p: 2, minWidth: '200px' }}>
+                  <Avatar sx={{ bgcolor: 'primary.main', mx: 'auto', mb: 1 }}>
+                    <Speed />
+                  </Avatar>
+                  <Typography variant="h6">
+                    {kpiData.saturation_accuracy}%
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Saturation Accuracy
+                  </Typography>
+                  <LinearProgress 
+                    variant="determinate" 
+                    value={kpiData.saturation_accuracy} 
+                    sx={{ mt: 1 }}
+                  />
+                </Card>
+                <Card sx={{ flex: '1 1 200px', textAlign: 'center', p: 2, minWidth: '200px' }}>
+                  <Avatar sx={{ bgcolor: 'secondary.main', mx: 'auto', mb: 1 }}>
+                    <Timeline />
+                  </Avatar>
+                  <Typography variant="h6">
+                    {kpiData.processing_time}s
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Avg Processing Time
+                  </Typography>
+                  <LinearProgress 
+                    variant="determinate" 
+                    value={(1 - kpiData.processing_time / 2) * 100} 
+                    sx={{ mt: 1 }}
+                  />
+                </Card>
+                <Card sx={{ flex: '1 1 200px', textAlign: 'center', p: 2, minWidth: '200px' }}>
+                  <Avatar sx={{ bgcolor: 'success.main', mx: 'auto', mb: 1 }}>
+                    <CheckCircle />
+                  </Avatar>
+                  <Typography variant="h6">
+                    {kpiData.user_satisfaction}%
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    User Satisfaction
+                  </Typography>
+                  <LinearProgress 
+                    variant="determinate" 
+                    value={kpiData.user_satisfaction} 
+                    sx={{ mt: 1 }}
+                  />
+                </Card>
+                <Card sx={{ flex: '1 1 200px', textAlign: 'center', p: 2, minWidth: '200px' }}>
+                  <Avatar sx={{ bgcolor: 'info.main', mx: 'auto', mb: 1 }}>
+                    <PhotoCamera />
+                  </Avatar>
+                  <Typography variant="h6">
+                    {kpiData.images_processed}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Images Processed
+                  </Typography>
+                  <LinearProgress 
+                    variant="determinate" 
+                    value={Math.min(kpiData.images_processed / 20, 1) * 100} 
+                    sx={{ mt: 1 }}
+                  />
+                </Card>
+              </Box>
+            </Paper>
+          </Fade>
+        )}
 
       <Box sx={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: 3 }}>
         {/* Upload Section */}
@@ -150,13 +294,16 @@ const ImageProcessor: React.FC = () => {
               <Slider
                 value={saturationLevel}
                 onChange={(e, value) => setSaturationLevel(value as number)}
-                min={1}
+                min={3}
                 max={10}
                 marks={[
-                  { value: 1, label: '1' },
                   { value: 3, label: '3' },
+                  { value: 4, label: '4' },
                   { value: 5, label: '5' },
+                  { value: 6, label: '6' },
                   { value: 7, label: '7' },
+                  { value: 8, label: '8' },
+                  { value: 9, label: '9' },
                   { value: 10, label: '10' }
                 ]}
                 valueLabelDisplay="auto"
@@ -336,6 +483,7 @@ const ImageProcessor: React.FC = () => {
         </Box>
       )}
     </Container>
+    </ThemeProvider>
   );
 };
 
