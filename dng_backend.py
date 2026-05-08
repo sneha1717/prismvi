@@ -4,7 +4,7 @@ DNG Processing Backend API
 Integrates PrismVI25 notebook functionality
 """
 
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
 import tempfile
@@ -19,7 +19,31 @@ import io
 import time
 
 app = Flask(__name__)
-CORS(app)
+
+
+def get_allowed_origins():
+    configured_origins = os.getenv("FRONTEND_ORIGIN", "")
+    parsed_origins = [origin.strip() for origin in configured_origins.split(",") if origin.strip()]
+
+    if parsed_origins:
+        return parsed_origins
+
+    return [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]
+
+
+ALLOWED_ORIGINS = get_allowed_origins()
+
+CORS(
+    app,
+    resources={
+        r"/api/*": {"origins": ALLOWED_ORIGINS},
+        r"/health": {"origins": ALLOWED_ORIGINS},
+    },
+)
+app.logger.info("Configured allowed frontend origins: %s", ", ".join(ALLOWED_ORIGINS))
 
 def mean_saturation_from_dng(dng_path):
     """Extract saturation metrics from DNG file - from PrismVI25 notebook"""
@@ -205,10 +229,14 @@ def health_check():
     return jsonify({'status': 'healthy', 'service': 'DNG Processing Backend'})
 
 if __name__ == '__main__':
+    port = int(os.getenv('PORT', '5001'))
+    debug = os.getenv('FLASK_DEBUG', 'false').lower() == 'true'
+
     print("Starting DNG Processing Backend...")
     print("Available endpoints:")
     print("  POST /api/process-dng - Process DNG with enhancement")
     print("  POST /api/analyze-dng - Analyze DNG without enhancement")
     print("  GET /api/kpi-data - Get dashboard KPI data")
     print("  GET /health - Health check")
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    print(f"Allowed frontend origins: {', '.join(ALLOWED_ORIGINS)}")
+    app.run(host='0.0.0.0', port=port, debug=debug)
