@@ -281,6 +281,9 @@ def health_check():
     return jsonify({'status': 'healthy', 'service': 'DNG Processing Backend'})
 
 if __name__ == '__main__':
+    port = int(os.getenv('PORT', '5001'))
+    debug = os.getenv('FLASK_DEBUG', 'false').lower() == 'true'
+
     print("Starting DNG Processing Backend...")
     print("Available endpoints:")
     print("  POST /api/process-dng - Process DNG with enhancement")
