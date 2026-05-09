@@ -4,22 +4,43 @@ DNG Processing Backend API
 Integrates PrismVI25 notebook functionality
 """
 
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, jsonify, request
 from flask_cors import CORS
-import os
-import tempfile
-import base64
-import json
-import exifread
 import rawpy
+import exifread
 import cv2
 import numpy as np
+import base64
 from PIL import Image
 import io
 import time
+import os
+import tempfile
+import json
 
 app = Flask(__name__)
-CORS(app)
+
+# Enhanced CORS for Vercel deployment - Allow all origins for production
+CORS(app, 
+     origins=['*'],  # Allow all origins for deployment flexibility
+     methods=['GET', 'POST', 'OPTIONS', 'PUT', 'DELETE'],
+     allow_headers=['Content-Type', 'Authorization', 'X-Requested-With'],
+     supports_credentials=True,
+     max_age=600)  # Cache preflight requests for 10 minutes
+
+# Global counters for dynamic dashboard
+processed_images_count = 0
+satisfaction_ratings = []
+
+# Add preflight handler for CORS
+@app.before_request
+def handle_preflight():
+    if request.method == "OPTIONS":
+        response = jsonify({'status': 'preflight'})
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        response.headers.add('Access-Control-Allow-Headers', '*')
+        response.headers.add('Access-Control-Allow-Methods', '*')
+        return response
 
 def mean_saturation_from_dng(dng_path):
     """Extract saturation metrics from DNG file - from PrismVI25 notebook"""
@@ -97,6 +118,8 @@ def apply_saturation_enhancement(image, level):
 @app.route('/api/process-dng', methods=['POST'])
 def process_dng():
     """Process DNG file with saturation enhancement"""
+    global processed_images_count
+    
     try:
         if 'file' not in request.files:
             return jsonify({'error': 'No file provided'}), 400
@@ -143,6 +166,9 @@ def process_dng():
         
         # Clean up
         os.unlink(dng_path)
+        
+        # Increment processed images counter
+        processed_images_count += 1
         
         return jsonify({
             'success': True,
@@ -200,11 +226,18 @@ def analyze_dng():
 @app.route('/api/kpi-data', methods=['GET'])
 def get_kpi_data():
     """Get dashboard KPI data"""
+    global processed_images_count, satisfaction_ratings
+    
+    # Calculate average satisfaction from ratings
+    avg_satisfaction = 92
+    if satisfaction_ratings:
+        avg_satisfaction = sum(satisfaction_ratings) / len(satisfaction_ratings) * 20
+    
     return jsonify({
         'saturation_accuracy': 95,
         'processing_time': 1.2,
-        'user_satisfaction': 92,
-        'images_processed': 15,
+        'user_satisfaction': round(avg_satisfaction),
+        'images_processed': processed_images_count,  # Dynamic count
         'enhancement_levels': {
             'min': 3,
             'max': 10,
@@ -217,6 +250,31 @@ def get_kpi_data():
             'f1_score': 96
         }
     })
+
+@app.route('/api/satisfaction', methods=['POST'])
+def submit_satisfaction():
+    """Submit user satisfaction rating"""
+    global satisfaction_ratings
+    
+    try:
+        data = request.get_json()
+        rating = data.get('rating')
+        
+        if rating is None or not (1 <= rating <= 5):
+            return jsonify({'error': 'Invalid rating'}), 400
+        
+        satisfaction_ratings.append(rating)
+        
+        return jsonify({
+            'success': True,
+            'message': 'Satisfaction rating recorded',
+            'total_ratings': len(satisfaction_ratings),
+            'average_rating': sum(satisfaction_ratings) / len(satisfaction_ratings)
+        })
+        
+    except Exception as e:
+        print(f"Error submitting satisfaction: {e}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/health', methods=['GET'])
 def health_check():

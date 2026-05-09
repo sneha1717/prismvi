@@ -12,15 +12,16 @@ import {
   Alert,
   Chip,
   Container,
-  Grid,
   Switch,
   FormControlLabel,
   Fade,
-  Zoom,
   LinearProgress,
   Avatar,
-  IconButton,
-  Tooltip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Rating,
   } from '@mui/material';
 import {
   CloudUpload,
@@ -48,6 +49,9 @@ const ImageProcessor: React.FC = () => {
   const [error, setError] = useState<string>('');
   const [darkMode, setDarkMode] = useState<boolean>(false);
   const [kpiData, setKpiData] = useState<any>(null);
+  const [showSatisfactionDialog, setShowSatisfactionDialog] = useState<boolean>(false);
+  const [satisfactionRating, setSatisfactionRating] = useState<number>(5);
+  const [lastProcessedImage, setLastProcessedImage] = useState<string>('');
 
   // Theme configuration
   const theme = createTheme({
@@ -70,14 +74,35 @@ const ImageProcessor: React.FC = () => {
   useEffect(() => {
     const fetchKPI = async () => {
       try {
-        const response = await axios.get('http://localhost:5001/api/kpi-data');
+        // Use environment variable or fallback to localhost
+        const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
+        const response = await axios.get(`${API_BASE_URL}/api/kpi-data`);
         setKpiData(response.data);
       } catch (err) {
         console.error('Failed to fetch KPI data:', err);
       }
     };
     fetchKPI();
+    
+    // Refresh KPI data every 5 seconds for real-time updates
+    const interval = setInterval(fetchKPI, 5000);
+    return () => clearInterval(interval);
   }, []);
+
+  // Handle satisfaction submission
+  const handleSatisfactionSubmit = async () => {
+    try {
+      const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
+      await axios.post(`${API_BASE_URL}/api/satisfaction`, {
+        rating: satisfactionRating,
+        timestamp: new Date().toISOString()
+      });
+      setShowSatisfactionDialog(false);
+      setSatisfactionRating(5);
+    } catch (err) {
+      console.error('Failed to submit satisfaction:', err);
+    }
+  };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
@@ -107,7 +132,8 @@ const ImageProcessor: React.FC = () => {
       formData.append('file', selectedFile);
       formData.append('level', saturationLevel.toString());
 
-      const response = await axios.post('http://localhost:5001/api/process-dng', formData, {
+      const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
+      const response = await axios.post(`${API_BASE_URL}/api/process-dng`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -116,7 +142,9 @@ const ImageProcessor: React.FC = () => {
       if (response.data.success) {
         setOriginalImage(response.data.original_image);
         setProcessedImage(response.data.enhanced_image);
+        setLastProcessedImage(response.data.enhanced_image);
         setMetadata(response.data);
+        setShowSatisfactionDialog(true);
       } else {
         setError('Processing failed');
       }
@@ -483,6 +511,60 @@ const ImageProcessor: React.FC = () => {
         </Box>
       )}
     </Container>
+
+      {/* Satisfaction Dialog */}
+      <Dialog 
+        open={showSatisfactionDialog} 
+        onClose={() => setShowSatisfactionDialog(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <CheckCircle color="primary" />
+            How satisfied are you with the enhancement?
+          </Typography>
+        </DialogTitle>
+        <DialogContent>
+          {lastProcessedImage && (
+            <Box sx={{ mb: 3, textAlign: 'center' }}>
+              <img 
+                src={lastProcessedImage} 
+                alt="Enhanced preview" 
+                style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: '8px' }}
+              />
+            </Box>
+          )}
+          <Typography variant="body1" gutterBottom>
+            Please rate your satisfaction with the enhanced image:
+          </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
+            <Rating
+              value={satisfactionRating}
+              onChange={(event, newValue) => {
+                setSatisfactionRating(newValue || 5);
+              }}
+              size="large"
+              precision={1}
+            />
+          </Box>
+          <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center' }}>
+            {satisfactionRating === 1 && "Very Dissatisfied"}
+            {satisfactionRating === 2 && "Dissatisfied"}
+            {satisfactionRating === 3 && "Neutral"}
+            {satisfactionRating === 4 && "Satisfied"}
+            {satisfactionRating === 5 && "Very Satisfied"}
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowSatisfactionDialog(false)}>
+            Skip
+          </Button>
+          <Button onClick={handleSatisfactionSubmit} variant="contained">
+            Submit Rating
+          </Button>
+        </DialogActions>
+      </Dialog>
     </ThemeProvider>
   );
 };
