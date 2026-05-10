@@ -239,7 +239,7 @@ def get_kpi_data():
         'user_satisfaction': round(avg_satisfaction),
         'images_processed': processed_images_count,  # Dynamic count
         'enhancement_levels': {
-            'min': 3,
+            'min': 5,
             'max': 10,
             'recommended': 5
         },
