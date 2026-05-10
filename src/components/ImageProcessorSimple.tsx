@@ -39,13 +39,12 @@ import { useDropzone } from 'react-dropzone';
 import axios from 'axios';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
-const API_BASE_URL = (process.env.REACT_APP_API_URL || 'http://localhost:5001').replace(/\/$/, '');
 
 const ImageProcessor: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [originalImage, setOriginalImage] = useState<string>('');
   const [processedImage, setProcessedImage] = useState<string>('');
-  const [saturationLevel, setSaturationLevel] = useState<number>(3); // Start from 3
+  const [saturationLevel, setSaturationLevel] = useState<number>(5); // Start from 5
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [metadata, setMetadata] = useState<any>(null);
   const [error, setError] = useState<string>('');
@@ -324,11 +323,9 @@ const ImageProcessor: React.FC = () => {
               <Slider
                 value={saturationLevel}
                 onChange={(e, value) => setSaturationLevel(value as number)}
-                min={3}
+                min={5}
                 max={10}
                 marks={[
-                  { value: 3, label: '3' },
-                  { value: 4, label: '4' },
                   { value: 5, label: '5' },
                   { value: 6, label: '6' },
                   { value: 7, label: '7' },
@@ -340,7 +337,7 @@ const ImageProcessor: React.FC = () => {
                 sx={{ mb: 2 }}
               />
               <Typography variant="caption" color="text.secondary">
-                * 3-10 levels of saturation enhancement as per project requirements
+                * 5-10 levels of saturation enhancement as per project requirements
               </Typography>
             </Box>
 

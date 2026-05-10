@@ -100,12 +100,12 @@ def extract_metadata(dng_path):
     return metadata
 
 def apply_saturation_enhancement(image, level):
-    """Apply saturation enhancement based on level (1-10)"""
+    """Apply saturation enhancement based on level (5-10)"""
     # Convert to HSV
     hsv = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
     
-    # Enhancement factor based on level
-    enhancement_factor = 1.0 + (level * 0.1)  # 1.1 to 2.0
+    # Enhancement factor based on level (5-10 range)
+    enhancement_factor = 1.0 + ((level - 4) * 0.1)  # 1.1 to 1.6 for 5-10 range
     
     # Apply enhancement to saturation channel
     hsv[:, :, 1] = np.clip(hsv[:, :, 1] * enhancement_factor, 0, 255)
